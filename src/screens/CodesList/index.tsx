@@ -1,5 +1,4 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AddQrButton } from './Partials/AddQrButton';
@@ -19,7 +18,6 @@ export const CodesList = () => {
       style={{
         flex: 1,
         backgroundColor: activeTheme.backgroundPrimary,
-        paddingTop: Platform.OS === 'android' ? 55 : 0,
       }}>
       <Tab.Navigator
         sceneContainerStyle={{
@@ -36,7 +34,7 @@ export const CodesList = () => {
             backgroundColor: activeTheme.textPrimary,
           },
         }}>
-        <Tab.Screen name="QRs" component={QrCodesList} />
+        <Tab.Screen name="QR" component={QrCodesList} />
         <Tab.Screen name="PromoCodes" component={PromoCodesList} />
       </Tab.Navigator>
       <AddQrButton />

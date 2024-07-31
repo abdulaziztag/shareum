@@ -1,9 +1,10 @@
 import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import Toast from 'react-native-toast-message';
 
+import { ListItem } from './ListItem';
+
 import { AppText } from '@/components/AppText';
 import { useActiveTheme } from '@/hooks/_index';
-import { ListItem } from '@/screens/QrListScreen/Partials/ListItem';
 import { useGetQrCodesListQuery } from '@/store/api/qrCode';
 
 export const QrCodesList = () => {

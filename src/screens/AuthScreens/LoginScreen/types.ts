@@ -1,4 +1,4 @@
 export type LoginForm = {
-	phoneNumber: string,
-	password: string
-}
+  phoneNumber: string;
+  password: string;
+};

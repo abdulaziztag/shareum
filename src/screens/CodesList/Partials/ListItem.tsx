@@ -6,6 +6,7 @@ import Toast from 'react-native-toast-message';
 
 import { AppCard, AppText } from '@/components/_index';
 import { IListPromoCode, IListQrCode } from '@/interfaces/_index';
+import { BASE_URL } from '@/store/api/api';
 import { useChangePromoStatusMutation } from '@/store/api/promoCode';
 import { useChangeQrStatusMutation } from '@/store/api/qrCode';
 import { RootStackType } from '@/types';
@@ -14,8 +15,9 @@ type componentPropsType = {
   code: IListQrCode | IListPromoCode;
 };
 
-export const ListItem = ({ code }: componentPropsType) => {
+export const ListItem = React.memo(({ code }: componentPropsType) => {
   const navigation = useNavigation<NavigationProp<RootStackType>>();
+  /* TODO: optimize codeStatus implementation (use directly from props, without using hooks) */
   const [codeStatus, setCodeStatus] = useState(code.status === 'a');
   const [changeQrStatusMutation, qrReqData] = useChangeQrStatusMutation();
   const [changePromoStatusMutation, promoReqData] = useChangePromoStatusMutation();
@@ -72,23 +74,23 @@ export const ListItem = ({ code }: componentPropsType) => {
         </AppText>
         <Image
           source={{
-            uri: 'http://167.99.240.68:1337' + code.crypto_network.crypto.logo,
+            uri: BASE_URL + '/media/' + code.crypto_network.crypto.logo,
             width: 30,
             height: 30,
           }}
         />
       </View>
       <View style={styles.spaceBetween}>
-        <AppText style={styles.textSecondary} secondary>
-          Total amount
+        <AppText style={styles.textSecondary} secondary translatable>
+          totalBalance
         </AppText>
         <AppText style={styles.textPrimary}>
           {code.balance} {code.crypto_network.crypto.slug}
         </AppText>
       </View>
       <View style={styles.spaceBetween}>
-        <AppText style={styles.textSecondary} secondary>
-          Available
+        <AppText style={styles.textSecondary} secondary translatable>
+          available
         </AppText>
         <AppText style={styles.textPrimary}>
           {code.current_balance} {code.crypto_network.crypto.slug}
@@ -96,7 +98,7 @@ export const ListItem = ({ code }: componentPropsType) => {
       </View>
     </AppCard>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {

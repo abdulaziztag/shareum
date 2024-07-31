@@ -1,87 +1,67 @@
-import {
-	View,
-	Text,
-	SafeAreaView,
-	StyleSheet,
-	Platform,
-	StatusBar,
-	FlatList,
-	TouchableOpacity
-} from 'react-native';
-import {useActiveColor} from '@/hooks/useActiveColor';
-import {useState} from 'react';
-import {ListHeader} from './Partials/ListHeader';
-import {ListItem} from './Partials/ListItem';
-import {IRegion} from '@/interfaces/IRegion';
-import {useAppSelector} from '@/hooks/storeHooks';
-import {AppButton} from '@/components/AppButton';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import { View, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default () => {
-	const activeTheme = useActiveColor()
-	const navigation = useNavigation()
-	const [searchInput, setSearchInput] = useState('')
-	const regions = useAppSelector(state => state.region.regions)
+import { ListHeader } from './Partials/ListHeader';
+import { ListItem } from './Partials/ListItem';
 
-	const styles = StyleSheet.create({
-		AndroidSafeArea: {
-			flex: 1,
-			paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-			backgroundColor: activeTheme.backgroundPrimary,
-		},
-		button: {
-			flex: 1,
-			alignItems: 'center',
-			justifyContent: 'center',
-			paddingVertical: 10,
-			marginHorizontal: 10,
-			marginBottom: 10,
-			borderRadius: 5,
-			backgroundColor: 'orange'
-		},
-		btnText: {
-			fontSize: 18,
-			fontFamily: 'Poppins_400Regular',
-			color: activeTheme.textPrimary
-		},
-	})
+import { AppButton } from '@/components/_index';
+import { useActiveTheme, useAppDispatch, useAppSelector } from '@/hooks/_index';
+import { IRegion } from '@/interfaces/_index';
+import { useGetRegionsQuery } from '@/store/api/regions';
+import { setRegions } from '@/store/features/regionsSlice';
 
-	const confirmSelection = () => {
-		regions.filter(region => region.state).length && navigation.goBack()
-	}
+export const RegionsScreen = () => {
+  const activeTheme = useActiveTheme();
+  const navigation = useNavigation();
+  const [searchInput, setSearchInput] = useState('');
+  const regions = useAppSelector((state) => state.region.regions);
+  const dispatch = useAppDispatch();
+  const { data, isSuccess } = useGetRegionsQuery();
 
-	return (
-		<SafeAreaView style={styles.AndroidSafeArea}>
-			<FlatList
-				renderItem={
-					({item}: { item: IRegion & { state: boolean } }) =>
-						<ListItem
-							key={item.id}
-							name={item.name}
-							id={item.id}
-							state={item.state}
-							slug={item.slug}
-							phoneCode={item.phoneCode}
-						/>
-				}
-				ListHeaderComponent={
-					<ListHeader
-						inputHandler={setSearchInput}
-						inputValue={searchInput}
-					/>
-				}
-				data={regions}
-				style={{
-					paddingTop: 10
-				}}
-			/>
-			<View style={{flexDirection: 'row'}}>
-				<AppButton
-					title={regions.filter(region => region.state).length ? 'Confirm' : 'Select at least one region'}
-					onClick={confirmSelection}
-					disabled={!regions.filter(region => region.state).length}
-				/>
-			</View>
-		</SafeAreaView>
-	)
-}
+  useEffect(() => {
+    if (isSuccess && data) {
+      dispatch(setRegions(data));
+    }
+  }, [isSuccess, data, dispatch]);
+
+  const confirmSelection = () => {
+    regions.filter((region) => region.state).length && navigation.goBack();
+  };
+
+  return (
+    <SafeAreaView style={{ backgroundColor: activeTheme.backgroundPrimary, flex: 1 }}>
+      <FlatList
+        renderItem={({ item }: { item: IRegion & { state: boolean } }) => (
+          <ListItem
+            key={item.id}
+            name={item.name}
+            id={item.id}
+            state={item.state}
+            code={item.code}
+            phone_code={item.phone_code}
+            flag={item.flag}
+          />
+        )}
+        ListHeaderComponent={<ListHeader inputHandler={setSearchInput} inputValue={searchInput} />}
+        data={regions}
+        style={{
+          paddingTop: 10,
+        }}
+      />
+      <View style={{ flexDirection: 'row' }}>
+        <AppButton
+          fullWidth
+          title={
+            regions.filter((region) => region.state).length
+              ? 'Confirm'
+              : 'Select at least one region'
+          }
+          onClick={confirmSelection}
+          disabled={!regions.filter((region) => region.state).length}
+        />
+      </View>
+    </SafeAreaView>
+  );
+};

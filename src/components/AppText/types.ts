@@ -1,9 +1,10 @@
-import {ReactNode} from 'react';
-import {TextStyle} from 'react-native';
+import { ReactNode } from 'react';
+import { TextProps, TextStyle } from 'react-native';
 
 export type AppTextProps = {
-	children: ReactNode,
-	style?: TextStyle | TextStyle[],
-	bold?: boolean,
-	secondary?: boolean
-}
+  children: ReactNode;
+  style?: TextStyle | TextStyle[];
+  bold?: boolean;
+  secondary?: boolean;
+  translatable?: boolean;
+} & TextProps;

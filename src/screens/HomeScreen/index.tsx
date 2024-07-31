@@ -1,38 +1,48 @@
-import {FlatList, RefreshControl} from 'react-native';
-import {ListHeader} from '@/screens/HomeScreen/Partials/ListHeader';
-import {ListItem} from '@/screens/HomeScreen/Partials/ListItem';
-import {useActiveColor} from '@/hooks/useActiveColor';
-import {useGetBalanceQuery} from '@/store/api/balance';
-import {IBalance} from '@/interfaces/IBalance';
-import {AppText} from '@/components/AppText';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { FlatList, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default () => {
-	const activeTheme = useActiveColor()
-	const {data, error, isLoading, isError, isFetching, refetch} = useGetBalanceQuery()
+import { AppText } from '@/components/_index';
+import { useActiveTheme } from '@/hooks/_index';
+import { IBalance } from '@/interfaces/_index';
+import { ListHeader } from '@/screens/HomeScreen/Partials/ListHeader';
+import { ListItem } from '@/screens/HomeScreen/Partials/ListItem';
+import { useGetBalanceQuery } from '@/store/api/balance';
 
-	if (isError) {
-		console.log(error)
-	}
+export const HomeScreen = () => {
+  const activeTheme = useActiveTheme();
+  const { data, error, isLoading, isError, isFetching, refetch, isSuccess } = useGetBalanceQuery();
 
-	return (
-		<SafeAreaView
-			style={{flex: 1, backgroundColor: activeTheme.backgroundPrimary}}
-		>
-			{isLoading || isError ?
-				<AppText>Loading</AppText> :
-				<FlatList<IBalance>
-					data={data}
-					style={{paddingLeft: 15, paddingRight: 15}}
-					ListHeaderComponent={<ListHeader
-						total={data.reduce((acc, curr) => acc + curr.total * curr.crypto.price, 0)}
-						available={data.reduce((acc, curr) => acc + (curr.available * curr.crypto.price), 0)}
-					/>}
-					renderItem={({item}) => <ListItem balancesListItem={item}/>}
-					keyExtractor={item => item.crypto.slug}
-					refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch}/>}
-				/>
-			}
-		</SafeAreaView>
-	)
-}
+  if (isError) {
+    console.log(error);
+  }
+
+  return (
+    <SafeAreaView
+      edges={['left', 'right']}
+      style={{ flex: 1, backgroundColor: activeTheme.backgroundPrimary }}>
+      {isLoading || isError ? (
+        <AppText>Loading</AppText>
+      ) : (
+        <FlatList<IBalance>
+          data={data}
+          style={{ paddingLeft: 15, paddingRight: 15 }}
+          ListHeaderComponent={
+            <ListHeader
+              total={
+                isSuccess ? data.reduce((acc, curr) => acc + curr.total * curr.crypto.price, 0) : 0
+              }
+              available={
+                isSuccess
+                  ? data.reduce((acc, curr) => acc + curr.available * curr.crypto.price, 0)
+                  : 0
+              }
+            />
+          }
+          renderItem={({ item }) => <ListItem balancesListItem={item} />}
+          keyExtractor={(item) => item.crypto.slug}
+          refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} />}
+        />
+      )}
+    </SafeAreaView>
+  );
+};

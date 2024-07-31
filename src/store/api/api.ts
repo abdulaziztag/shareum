@@ -1,60 +1,98 @@
 import {
-	BaseQueryFn,
-	createApi,
-	FetchArgs,
-	fetchBaseQuery,
-	FetchBaseQueryError
+  BaseQueryFn,
+  createApi,
+  FetchArgs,
+  fetchBaseQuery,
+  FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
-import {RootState} from '@/store';
-import {setTokens} from '@/store/features/authSlice';
-import {changeError, changeIsLoggedIn} from '@/store/features/utilsSlice';
-import {deleteTokens, getTokens} from '@/helpers/tokens';
-import {setTokens as ff} from '@/helpers/tokens'
 
-export const BASE_URL = 'http://167.99.240.68:1337/'
+import { deleteTokens, getTokens, setTokens } from '@/helpers/_index';
+import { setTokensAction } from '@/store/features/authSlice';
+import { changeIsLoggedIn } from '@/store/features/utilsSlice';
 
-const baseQuery = fetchBaseQuery({
-	baseUrl: BASE_URL,
-	prepareHeaders: async (headers, {getState}) => {
-		const tokens = await getTokens()
-		if (tokens.access) {
-			headers.set('Authorization', `Bearer ${tokens.access}`)
-		}
-		return headers
-	}
-})
+export const BASE_URL = 'http://158.160.86.200:1337/';
 
-const baseQueryWithReAuth: BaseQueryFn<
-	string | FetchArgs,
-	unknown,
-	FetchBaseQueryError
-> = async (args, api, extraOptions) => {
-	let result = await baseQuery(args, api, extraOptions)
-	//console.log(JSON.stringify(result))
-	if	(result.error) {
-		//api.dispatch(changeError('WTF!!!'))
-	}
-	if (result.error && result.error.status === 401) {
-		api.dispatch(changeIsLoggedIn(false))
-		await deleteTokens()
-		api.dispatch(changeError('Unauthorized please login again'))
-		// try to get a new token
-		const refreshResult = await baseQuery('/api/token/refresh/', api, extraOptions)
-		if (refreshResult.data) {
-			// store the new token
-			api.dispatch(setTokens(refreshResult.data))
-			await ff(refreshResult.data?.access, refreshResult.data.refresh)
-			// retry the initial query
-			result = await baseQuery(args, api, extraOptions)
-		} else {
-			await deleteTokens()
-			api.dispatch(changeIsLoggedIn(false))
-		}
-	}
-	return result
-}
+const reservedHost: string = 'https://change.swttoken.com/kenai/host/';
+
+type RefreshResponse = {
+  access: string;
+  refresh: string;
+};
+
+type BaseQueryResult<T> = {
+  data?: T;
+  error?: FetchBaseQueryError;
+};
+
+const fetchReservedHost = async () => {
+  try {
+    const response = await fetch(reservedHost);
+    const data = await response.json();
+    return data.name2; // Assuming the response contains the new host URL in the 'name2' property
+  } catch (error) {
+    console.error('Failed to fetch reserved host:', error);
+    return null;
+  }
+};
+
+const createBaseQuery = (baseUrl: string) =>
+  fetchBaseQuery({
+    baseUrl,
+    prepareHeaders: async (headers, { getState }) => {
+      const tokens = await getTokens();
+      if (tokens.access) {
+        headers.set('Authorization', `Bearer ${tokens.access}`);
+      }
+      return headers;
+    },
+  });
+
+let currentBaseQuery = createBaseQuery(BASE_URL);
+
+const baseQueryWithReAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions
+) => {
+  let result = await currentBaseQuery(args, api, extraOptions);
+
+  if (result.error && result.error.status === 'FETCH_ERROR') {
+    const newHost = await fetchReservedHost();
+    if (newHost) {
+      currentBaseQuery = createBaseQuery(newHost); // Update the base query with the new base URL
+      result = await currentBaseQuery(args, api, extraOptions);
+    }
+  }
+
+  if (result.error && result.error.status === 401) {
+    const { refresh } = await getTokens();
+    const refreshResult = (await currentBaseQuery(
+      {
+        url: '/api/token/refresh/',
+        method: 'POST',
+        body: {
+          refresh,
+        },
+      },
+      api,
+      extraOptions
+    )) as BaseQueryResult<RefreshResponse>;
+
+    if (refreshResult.data) {
+      api.dispatch(setTokensAction(refreshResult.data));
+      await setTokens(refreshResult.data.access, refresh as string);
+      result = await currentBaseQuery(args, api, extraOptions);
+    } else {
+      await deleteTokens();
+      api.dispatch(changeIsLoggedIn(false));
+    }
+  }
+
+  return result;
+};
+
 export const api = createApi({
-	baseQuery: baseQueryWithReAuth,
-	tagTypes: ['Balance', 'Crypto', 'PromoCode', 'QrCode'],
-	endpoints: () => ({})
-})
+  baseQuery: baseQueryWithReAuth,
+  tagTypes: ['Balance', 'Crypto', 'PromoCode', 'QrCode'],
+  endpoints: () => ({}),
+});

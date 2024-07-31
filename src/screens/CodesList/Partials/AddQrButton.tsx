@@ -54,7 +54,7 @@ export const AddQrButton = () => {
             ]}
             onPressOut={() => {
               setPressed(false);
-              navigation.navigate('ChooseCoin', { codeType: 'QR' });
+              navigation.navigate('ChooseCoin', { codeType: 'QR', nextScreen: 'CreateCode' });
             }}>
             <AppText numberOfLines={1} style={styles.listText}>
               Qr Code
@@ -67,7 +67,7 @@ export const AddQrButton = () => {
             ]}
             onPressOut={() => {
               setPressed(false);
-              navigation.navigate('ChooseCoin', { codeType: 'Promo' });
+              navigation.navigate('ChooseCoin', { codeType: 'Promo', nextScreen: 'CreateCode' });
             }}>
             <AppText numberOfLines={1} style={styles.listText}>
               Promo Code
@@ -77,7 +77,7 @@ export const AddQrButton = () => {
             style={styles.listItem}
             onPressOut={() => {
               setPressed(false);
-              navigation.navigate('ChooseCoin', { codeType: 'API' });
+              navigation.navigate('ChooseCoin', { codeType: 'API', nextScreen: 'CreateCode' });
             }}>
             <AppText numberOfLines={1} style={styles.listText}>
               API

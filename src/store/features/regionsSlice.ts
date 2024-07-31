@@ -1,39 +1,28 @@
-import {IRegion} from '@/interfaces/IRegion';
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-const initialState: { regions: Array<IRegion & {state: boolean}> } = {
-	regions: [
-		{
-			name: 'Uzbekistan',
-			id: 1,
-			slug: 'uz',
-			phoneCode: '+998',
-			state: true
-		},
-		{
-			name: 'Russia',
-			id: 2,
-			slug: 'ru',
-			phoneCode: '+7',
-			state: true
-		}
-	]
-}
+import { IRegion } from '@/interfaces/_index';
+
+const initialState: { regions: (IRegion & { state: boolean })[] } = {
+  regions: [],
+};
 
 export const regionsSlice = createSlice({
-	name: 'regions',
-	initialState,
-	reducers: {
-		changeAll: (state, action: PayloadAction<boolean>) => {
-			state.regions = state.regions.map(region => ({...region, state: action.payload}))
-		},
-		changeOne: (state, action: PayloadAction<number>) => {
-			const regionIndex = state.regions.findIndex(region => region.id === action.payload)
-			const newState = [...state.regions]
-			newState[regionIndex].state = !newState[regionIndex].state
-			state.regions = newState
-		}
-	}
-})
+  name: 'regions',
+  initialState,
+  reducers: {
+    setRegions: (state, action: PayloadAction<IRegion[]>) => {
+      state.regions = action.payload.map((region) => ({ state: false, ...region }));
+    },
+    changeAll: (state, action: PayloadAction<boolean>) => {
+      state.regions = state.regions.map((region) => ({ ...region, state: action.payload }));
+    },
+    changeOne: (state, action: PayloadAction<string>) => {
+      const regionIndex = state.regions.findIndex((region) => region.id === action.payload);
+      const newState = [...state.regions];
+      newState[regionIndex].state = !newState[regionIndex].state;
+      state.regions = newState;
+    },
+  },
+});
 
-export const {changeAll, changeOne} = regionsSlice.actions
+export const { changeAll, changeOne, setRegions } = regionsSlice.actions;

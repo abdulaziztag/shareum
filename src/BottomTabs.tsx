@@ -1,90 +1,117 @@
-import {FlatList, Platform, SafeAreaView, StatusBar, useColorScheme} from 'react-native';
-import Animated, {
-	FadeInRight, FadeOutRight, Layout,
-	useAnimatedStyle,
-	useSharedValue,
-	withTiming
-} from 'react-native-reanimated';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import * as SplashScreen from 'expo-splash-screen';
-import {Ionicons} from '@expo/vector-icons'
+import { useEffect } from 'react';
+import { View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-import {ITab} from '@/interfaces/ITab';
-
-import {useActiveColor} from '@/hooks/useActiveColor';
-
-import ScanScreen from '@/screens/ScanScreen';
-import ProfileScreen from '@/screens/ProfileScreen';
-import HomeScreen from '@/screens/HomeScreen';
-import {AppText} from '@/components/AppText';
+import { AppText } from '@/components/_index';
+import { useActiveTheme } from '@/hooks/_index';
+import { ITab } from '@/interfaces/ITab';
+import { HomeScreen, ProfileScreen, ScanScreen } from '@/screens/_index';
 
 const Tab = createBottomTabNavigator();
 
-const Tabs: Array<ITab> = [
-	{
-		name: 'Home',
-		component: HomeScreen,
-		iconName: 'md-home',
-		iconNameOutlined: 'md-home-outline'
-	},
-	{
-		name: 'Scan',
-		component: ScanScreen,
-		iconName: 'md-qr-code',
-		iconNameOutlined: 'md-qr-code-outline'
-	},
-	{
-		name: 'Profile',
-		component: ProfileScreen,
-		iconName: 'md-person',
-		iconNameOutlined: 'md-person-outline'
-	}
-]
+const Tabs: ITab[] = [
+  {
+    name: 'home',
+    component: HomeScreen,
+    iconName: 'home',
+    iconNameOutlined: 'home-outline',
+  },
+  {
+    name: 'scan',
+    component: ScanScreen,
+    iconName: 'qr-code',
+    iconNameOutlined: 'qr-code-outline',
+  },
+  {
+    name: 'profile',
+    component: ProfileScreen,
+    iconName: 'person',
+    iconNameOutlined: 'person-outline',
+  },
+];
 
-SplashScreen.preventAutoHideAsync()
+SplashScreen.preventAutoHideAsync().then();
 
 export default () => {
-	const activeTheme = useActiveColor()
+  const activeTheme = useActiveTheme();
 
-	const tabBarIcon = ({focused, tab}) => (
-		<>
-			<Ionicons name={focused ? tab.iconName : tab.iconNameOutlined} size={25}
-								color={activeTheme.textPrimary} />
-			{focused && <AppText>{tab.name}</AppText>}
-		</>)
+  const TabBarIcon = ({ focused, tab }: { focused: boolean; tab: ITab }) => {
+    const textAnimationValue = useSharedValue(0);
+    const iconAnimationValue = useSharedValue(25);
 
-	return (
-		<>
-			<Tab.Navigator
-				initialRouteName="home"
-				screenOptions={{
-					headerShown: false,
-					tabBarStyle: {
-						backgroundColor: activeTheme.backgroundSecondary,
-						height: '10%',
-						paddingTop: Platform.OS === 'ios' ? 15 : 0,
-						borderTopWidth: 0,
-					}
-				}}
-				sceneContainerStyle={{
-					backgroundColor: activeTheme.backgroundPrimary
-				}}
-			>
-				{
-					Tabs.map((tab) => (
-						<Tab.Screen
-							key={tab.name}
-							name={tab.name}
-							component={tab.component}
-							options={{
-								tabBarIcon: ({focused}) => tabBarIcon({focused, tab}),
-								tabBarShowLabel: false,
-								unmountOnBlur: tab.name === 'Scan'
-							}}
-						/>
-					))
-				}
-			</Tab.Navigator>
-		</>
-	)
-}
+    useEffect(() => {
+      textAnimationValue.value = focused ? 1 : 0;
+      iconAnimationValue.value = focused ? 10 : 25;
+    }, [focused]);
+
+    const config = {
+      duration: 250,
+    };
+
+    const animatedIconStyle = useAnimatedStyle(() => {
+      return {
+        marginTop: withTiming(iconAnimationValue.value, config),
+      };
+    });
+
+    const animatedTextStyle = useAnimatedStyle(() => {
+      return {
+        opacity: withTiming(textAnimationValue.value, config),
+      };
+    });
+
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+        }}>
+        <Animated.View style={animatedIconStyle}>
+          <Ionicons
+            name={focused ? tab.iconName : tab.iconNameOutlined}
+            size={25}
+            color={activeTheme.textPrimary}
+          />
+        </Animated.View>
+        <Animated.View style={animatedTextStyle}>
+          <AppText translatable>{tab.name}</AppText>
+        </Animated.View>
+      </View>
+    );
+  };
+
+  return (
+    <>
+      <Tab.Navigator
+        initialRouteName="home"
+        screenOptions={{
+          headerShown: false,
+        }}
+        sceneContainerStyle={{
+          backgroundColor: activeTheme.backgroundPrimary,
+        }}>
+        {Tabs.map((tab) => (
+          <Tab.Screen
+            key={tab.name}
+            name={tab.name}
+            component={tab.component}
+            options={{
+              tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} tab={tab} />,
+              tabBarShowLabel: false,
+              tabBarItemStyle: {},
+              tabBarStyle: {
+                height: '10%',
+                borderTopWidth: 0,
+                backgroundColor: activeTheme.backgroundSecondary,
+              },
+              unmountOnBlur: tab.name === 'scan',
+            }}
+          />
+        ))}
+      </Tab.Navigator>
+    </>
+  );
+};
